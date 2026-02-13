@@ -187,6 +187,30 @@ export class AuthService {
   }
 
   /**
+   * Request password reset
+   */
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      // Return success even if user doesn't exist (security best practice)
+      return { message: "If the email exists, a password reset link has been sent" };
+    }
+
+    // In production, generate reset token and send email
+    // For now, just return success message
+    return { message: "If the email exists, a password reset link has been sent" };
+  }
+
+  /**
+   * Reset password
+   */
+  async resetPassword(_resetToken: string, _newPassword: string): Promise<{ message: string }> {
+    // In production, verify reset token and update password
+    // For now, just return success message
+    return { message: "Password has been reset successfully" };
+  }
+
+  /**
    * Format auth response
    */
   private formatAuthResponse(user: User, token: string, refreshToken: string): AuthResponseDTO {

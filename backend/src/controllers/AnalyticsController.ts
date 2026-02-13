@@ -11,7 +11,8 @@ export class AnalyticsController {
    */
   static getEventAnalytics = asyncHandler(async (req: Request, res: Response) => {
     const { eventId } = req.params;
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
+    if (!userId) throw new Error("User not authenticated");
 
     const analytics = await analyticsService.getEventAnalytics(
       eventId,
@@ -28,7 +29,8 @@ export class AnalyticsController {
    * Get creator's dashboard with all events analytics
    */
   static getCreatorDashboard = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
+    if (!userId) throw new Error("User not authenticated");
 
     const dashboard = await analyticsService.getCreatorDashboard(userId);
 

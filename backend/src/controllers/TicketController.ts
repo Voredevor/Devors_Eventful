@@ -1,14 +1,21 @@
 import { Request, Response } from "express";
 import { ticketService } from "@services/TicketService";
 import { asyncHandler } from "@middleware/errorHandler";
-import { validateRequest } from "@utils/validators";
+import {
+  validateRequest,
+  createTicketPurchaseSchema,
+  createScanTicketSchema,
+} from "@utils/validators";
 
 export const ticketController = {
   purchaseTicket: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const { eventId } = req.body;
-    const userId = (req as any).user.id;
-
-    validateRequest({ eventId: "string" }, req.body);
+    const schema = createTicketPurchaseSchema();
+    const { eventId } = validateRequest<{ eventId: string }>(req.body, schema);
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     const ticket = await ticketService.purchaseTicket(userId, eventId);
 
@@ -21,7 +28,11 @@ export const ticketController = {
 
   getTicket: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { ticketId } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     const ticket = await ticketService.getTicketById(ticketId, userId);
 
@@ -32,7 +43,11 @@ export const ticketController = {
   }),
 
   getUserTickets: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const userId = (req as any).user.id;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
 
@@ -60,9 +75,8 @@ export const ticketController = {
   }),
 
   scanTicket: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const { qrData } = req.body;
-
-    validateRequest({ qrData: "string" }, req.body);
+    const schema = createScanTicketSchema();
+    const { qrData } = validateRequest<{ qrData: string }>(req.body, schema);
 
     const ticket = await ticketService.scanTicket(qrData);
 
@@ -74,7 +88,11 @@ export const ticketController = {
   }),
 
   getUpcomingTickets: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const userId = (req as any).user.id;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
     const limit = parseInt(req.query.limit as string) || 5;
 
     const tickets = await ticketService.getUserUpcomingTickets(userId, limit);
@@ -87,7 +105,11 @@ export const ticketController = {
 
   refundTicket: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { ticketId } = req.params;
-    const userId = (req as any).user.id;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     const ticket = await ticketService.refundTicket(ticketId, userId);
 

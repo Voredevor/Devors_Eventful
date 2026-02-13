@@ -6,6 +6,7 @@ import {
   createRegisterSchema,
   createLoginSchema,
 } from "../utils/validators";
+import { RegisterDTO, LoginDTO } from "../types/auth";
 
 export class AuthController {
   /**
@@ -14,9 +15,9 @@ export class AuthController {
    */
   static register = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const schema = createRegisterSchema();
-    const data = validateRequest(req.body, schema);
+    const data = validateRequest<RegisterDTO>(req.body, schema);
 
-    const result = await authService.register(data as any);
+    const result = await authService.register(data);
 
     res.status(201).json({
       success: true,
@@ -31,9 +32,9 @@ export class AuthController {
    */
   static login = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const schema = createLoginSchema();
-    const data = validateRequest(req.body, schema);
+    const data = validateRequest<LoginDTO>(req.body, schema);
 
-    const result = await authService.login(data as any);
+    const result = await authService.login(data);
 
     res.status(200).json({
       success: true,
@@ -67,7 +68,7 @@ export class AuthController {
    * POST /api/v1/auth/logout
    */
   static logout = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
 
     if (!userId) {
       throw new Error("User not authenticated");
@@ -86,7 +87,7 @@ export class AuthController {
    * GET /api/v1/auth/profile
    */
   static getProfile = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
 
     if (!userId) {
       throw new Error("User not authenticated");
@@ -116,7 +117,7 @@ export class AuthController {
    * PATCH /api/v1/auth/profile
    */
   static updateProfile = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
 
     if (!userId) {
       throw new Error("User not authenticated");

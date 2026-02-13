@@ -22,27 +22,23 @@ export class EventShareService {
     userId: string,
     platform: string
   ): Promise<EventShare> {
-    try {
-      const event = await this.eventRepository.findById(eventId);
-      if (!event) {
-        throw new NotFoundError("Event not found");
-      }
-
-      // Generate unique share link
-      const shareToken = crypto.randomBytes(12).toString("hex");
-      const shareLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/events/${eventId}?shared_by=${shareToken}&platform=${platform}`;
-
-      const share = await this.eventShareRepository.create({
-        eventId,
-        userId,
-        platform,
-        shareLink,
-      });
-
-      return share;
-    } catch (error) {
-      throw error;
+    const event = await this.eventRepository.findById(eventId);
+    if (!event) {
+      throw new NotFoundError("Event not found");
     }
+
+    // Generate unique share link
+    const shareToken = crypto.randomBytes(12).toString("hex");
+    const shareLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/events/${eventId}?shared_by=${shareToken}&platform=${platform}`;
+
+    const share = await this.eventShareRepository.create({
+      eventId,
+      userId,
+      platform,
+      shareLink,
+    });
+
+    return share;
   }
 
   /**
@@ -56,42 +52,30 @@ export class EventShareService {
     sharesByPlatform: { [key: string]: number };
     uniqueSharers: number;
   }> {
-    try {
-      const event = await this.eventRepository.findById(eventId);
-      if (!event) {
-        throw new NotFoundError("Event not found");
-      }
-
-      if (event.creatorId !== userId) {
-        throw new Error("Not authorized to view share stats for this event");
-      }
-
-      return await this.eventShareRepository.getShareStats(eventId);
-    } catch (error) {
-      throw error;
+    const event = await this.eventRepository.findById(eventId);
+    if (!event) {
+      throw new NotFoundError("Event not found");
     }
+
+    if (event.creatorId !== userId) {
+      throw new Error("Not authorized to view share stats for this event");
+    }
+
+    return await this.eventShareRepository.getShareStats(eventId);
   }
 
   /**
    * Get all shares for an event
    */
   async getEventShares(eventId: string): Promise<EventShare[]> {
-    try {
-      return await this.eventShareRepository.findByEventId(eventId);
-    } catch (error) {
-      throw error;
-    }
+    return await this.eventShareRepository.findByEventId(eventId);
   }
 
   /**
    * Get creator's sharing statistics across all their events
    */
   async getCreatorShareStats(userId: string) {
-    try {
-      return await this.eventShareRepository.getCreatorShareStats(userId);
-    } catch (error) {
-      throw error;
-    }
+    return await this.eventShareRepository.getCreatorShareStats(userId);
   }
 
   /**
@@ -131,14 +115,10 @@ export class EventShareService {
   /**
    * Track share clicks (called when someone opens the shared link)
    */
-  async trackShareClick(shareToken: string): Promise<boolean> {
-    try {
-      // In a real implementation, you might track clicks/analytics
-      // For now, this is a placeholder for tracking functionality
-      return true;
-    } catch (error) {
-      throw error;
-    }
+  async trackShareClick(_shareToken: string): Promise<boolean> {
+    // In a real implementation, you might track clicks/analytics
+    // For now, this is a placeholder for tracking functionality
+    return true;
   }
 
   /**
@@ -148,19 +128,15 @@ export class EventShareService {
     eventId: string,
     limit: number = 5
   ): Promise<Array<{ platform: string; shareCount: number }>> {
-    try {
-      const stats = await this.eventShareRepository.getShareStats(eventId);
-      const platforms = Object.entries(stats.sharesByPlatform)
-        .map(([platform, count]) => ({
-          platform,
-          shareCount: count,
-        }))
-        .sort((a, b) => b.shareCount - a.shareCount)
-        .slice(0, limit);
+    const stats = await this.eventShareRepository.getShareStats(eventId);
+    const platforms = Object.entries(stats.sharesByPlatform)
+      .map(([platform, count]) => ({
+        platform,
+        shareCount: count,
+      }))
+      .sort((a, b) => b.shareCount - a.shareCount)
+      .slice(0, limit);
 
-      return platforms;
-    } catch (error) {
-      throw error;
-    }
+    return platforms;
   }
 }

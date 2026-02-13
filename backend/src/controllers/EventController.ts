@@ -6,10 +6,23 @@ import { validateRequest, createEventSchema } from "../utils/validators";
 export class EventController {
   static createEvent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const schema = createEventSchema();
-    const data = validateRequest(req.body, schema);
-    const creatorId = req.user?.userId!;
+    const data = validateRequest<{
+      title: string;
+      description: string;
+      category: string;
+      imageUrl?: string;
+      location: string;
+      startDate: string;
+      endDate: string;
+      totalTickets: number;
+      price: number;
+      reminderDefault?: string;
+      customReminderHours?: number;
+    }>(req.body, schema);
+    const creatorId = req.user?.userId;
+    if (!creatorId) throw new Error("User not authenticated");
 
-    const event = await eventService.createEvent(creatorId, data as any);
+    const event = await eventService.createEvent(creatorId, data);
 
     res.status(201).json({
       success: true,
@@ -29,7 +42,8 @@ export class EventController {
   });
 
   static getMyEvents = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const creatorId = req.user?.userId!;
+    const creatorId = req.user?.userId;
+    if (!creatorId) throw new Error("User not authenticated");
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
 
@@ -73,7 +87,8 @@ export class EventController {
 
   static updateEvent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { eventId } = req.params;
-    const creatorId = req.user?.userId!;
+    const creatorId = req.user?.userId;
+    if (!creatorId) throw new Error("User not authenticated");
 
     const event = await eventService.updateEvent(eventId, creatorId, req.body);
 
@@ -86,7 +101,8 @@ export class EventController {
 
   static publishEvent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { eventId } = req.params;
-    const creatorId = req.user?.userId!;
+    const creatorId = req.user?.userId;
+    if (!creatorId) throw new Error("User not authenticated");
 
     const event = await eventService.publishEvent(eventId, creatorId);
 
@@ -99,7 +115,8 @@ export class EventController {
 
   static cancelEvent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { eventId } = req.params;
-    const creatorId = req.user?.userId!;
+    const creatorId = req.user?.userId;
+    if (!creatorId) throw new Error("User not authenticated");
 
     const event = await eventService.cancelEvent(eventId, creatorId);
 
@@ -112,7 +129,8 @@ export class EventController {
 
   static deleteEvent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { eventId } = req.params;
-    const creatorId = req.user?.userId!;
+    const creatorId = req.user?.userId;
+    if (!creatorId) throw new Error("User not authenticated");
 
     await eventService.deleteEvent(eventId, creatorId);
 

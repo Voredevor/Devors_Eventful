@@ -64,7 +64,7 @@ export class PaymentRepository {
   }
 
   async countByStatus(status: string): Promise<number> {
-    return this.repository.count({ where: { status: status as any } });
+    return this.repository.count({ where: { status: status as "pending" | "completed" | "failed" } });
   }
 
   async findCompletedPayments(startDate: Date, endDate: Date): Promise<Payment[]> {

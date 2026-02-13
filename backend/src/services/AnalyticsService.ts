@@ -26,78 +26,22 @@ export class AnalyticsService {
    * Only event creator can access
    */
   async getEventAnalytics(eventId: string, userId: string) {
-    try {
-      const event = await this.eventRepository.findById(eventId);
-      if (!event) {
-        throw new NotFoundError("Event not found");
-      }
-
-      if (event.creatorId !== userId) {
-        throw new AuthorizationError(
-          "You are not authorized to view this event's analytics"
-        );
-      }
-
-      // Get or create analytics if it doesn't exist
-      let analytics = await this.analyticsRepository.findByEventId(eventId);
-
-      if (!analytics) {
-        // Generate analytics from ticket and payment data
-        const ticketCount = await this.ticketRepository.countByEventId(eventId);
-        const scannedTickets = await this.dataSource
-          .getRepository(Ticket)
-          .count({
-            where: { eventId, qrScanned: true },
-          });
-
-        const payments = await this.paymentRepository.findByEventId(
-          eventId,
-          1,
-          999999
-        );
-        const revenue = payments.payments
-          .filter((p: Payment) => p.status === "completed")
-          .reduce((sum: number, p: Payment) => sum + Number(p.amount), 0);
-
-        analytics = await this.analyticsRepository.create({
-          eventId,
-          creatorId: userId,
-          totalTicketsSold: ticketCount,
-          ticketHoldersWithScannedQr: scannedTickets,
-          revenue,
-          totalAttendees: scannedTickets,
-          dateTracked: new Date(),
-        });
-      }
-
-      return await this.analyticsRepository.getEventAnalytics(eventId);
-    } catch (error) {
-      throw error;
+    const event = await this.eventRepository.findById(eventId);
+    if (!event) {
+      throw new NotFoundError("Event not found");
     }
-  }
 
-  /**
-   * Get creator's dashboard with all their events' metrics
-   */
-  async getCreatorDashboard(userId: string) {
-    try {
-      return await this.analyticsRepository.getCreatorDashboard(userId);
-    } catch (error) {
-      throw error;
+    if (event.creatorId !== userId) {
+      throw new AuthorizationError(
+        "You are not authorized to view this event's analytics"
+      );
     }
-  }
 
-  /**
-   * Manually trigger analytics generation/update for an event
-   * (Can be called by background job or manually)
-   */
-  async updateEventAnalytics(eventId: string): Promise<Analytics | null> {
-    try {
-      const event = await this.eventRepository.findById(eventId);
-      if (!event) {
-        throw new NotFoundError("Event not found");
-      }
+    // Get or create analytics if it doesn't exist
+    let analytics = await this.analyticsRepository.findByEventId(eventId);
 
+    if (!analytics) {
+      // Generate analytics from ticket and payment data
       const ticketCount = await this.ticketRepository.countByEventId(eventId);
       const scannedTickets = await this.dataSource
         .getRepository(Ticket)
@@ -114,29 +58,73 @@ export class AnalyticsService {
         .filter((p: Payment) => p.status === "completed")
         .reduce((sum: number, p: Payment) => sum + Number(p.amount), 0);
 
-      let analytics = await this.analyticsRepository.findByEventId(eventId);
+      analytics = await this.analyticsRepository.create({
+        eventId,
+        creatorId: userId,
+        totalTicketsSold: ticketCount,
+        ticketHoldersWithScannedQr: scannedTickets,
+        revenue,
+        totalAttendees: scannedTickets,
+        dateTracked: new Date(),
+      });
+    }
 
-      if (analytics) {
-        return await this.analyticsRepository.update(analytics.id, {
-          totalTicketsSold: ticketCount,
-          ticketHoldersWithScannedQr: scannedTickets,
-          revenue,
-          totalAttendees: scannedTickets,
-          dateTracked: new Date(),
-        });
-      } else {
-        return await this.analyticsRepository.create({
-          eventId,
-          creatorId: event.creatorId,
-          totalTicketsSold: ticketCount,
-          ticketHoldersWithScannedQr: scannedTickets,
-          revenue,
-          totalAttendees: scannedTickets,
-          dateTracked: new Date(),
-        });
-      }
-    } catch (error) {
-      throw error;
+    return await this.analyticsRepository.getEventAnalytics(eventId);
+  }
+
+  /**
+   * Get creator's dashboard with all their events' metrics
+   */
+  async getCreatorDashboard(userId: string) {
+    return await this.analyticsRepository.getCreatorDashboard(userId);
+  }
+
+  /**
+   * Manually trigger analytics generation/update for an event
+   * (Can be called by background job or manually)
+   */
+  async updateEventAnalytics(eventId: string): Promise<Analytics | null> {
+    const event = await this.eventRepository.findById(eventId);
+    if (!event) {
+      throw new NotFoundError("Event not found");
+    }
+
+    const ticketCount = await this.ticketRepository.countByEventId(eventId);
+    const scannedTickets = await this.dataSource
+      .getRepository(Ticket)
+      .count({
+        where: { eventId, qrScanned: true },
+      });
+
+    const payments = await this.paymentRepository.findByEventId(
+      eventId,
+      1,
+      999999
+    );
+    const revenue = payments.payments
+      .filter((p: Payment) => p.status === "completed")
+      .reduce((sum: number, p: Payment) => sum + Number(p.amount), 0);
+
+    const analytics = await this.analyticsRepository.findByEventId(eventId);
+
+    if (analytics) {
+      return await this.analyticsRepository.update(analytics.id, {
+        totalTicketsSold: ticketCount,
+        ticketHoldersWithScannedQr: scannedTickets,
+        revenue,
+        totalAttendees: scannedTickets,
+        dateTracked: new Date(),
+      });
+    } else {
+      return await this.analyticsRepository.create({
+        eventId,
+        creatorId: event.creatorId,
+        totalTicketsSold: ticketCount,
+        ticketHoldersWithScannedQr: scannedTickets,
+        revenue,
+        totalAttendees: scannedTickets,
+        dateTracked: new Date(),
+      });
     }
   }
 
@@ -144,11 +132,10 @@ export class AnalyticsService {
    * Get trending events based on ticket sales and QR scans
    */
   async getTrendingEvents(limit: number = 5) {
-    try {
-      const events = await this.dataSource
-        .getRepository(Analytics)
-        .query(
-          `
+    const events = await this.dataSource
+      .getRepository(Analytics)
+      .query(
+        `
         SELECT 
           eventId, 
           "totalTicketsSold", 
@@ -160,12 +147,9 @@ export class AnalyticsService {
         ORDER BY "totalTicketsSold" DESC, "ticketHoldersWithScannedQr" DESC
         LIMIT $1
       `,
-          [limit]
-        );
+        [limit]
+      );
 
-      return events;
-    } catch (error) {
-      throw error;
-    }
+    return events;
   }
 }

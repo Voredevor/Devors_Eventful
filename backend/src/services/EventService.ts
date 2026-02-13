@@ -70,7 +70,11 @@ export class EventService {
     return eventRepository.findByCreatorId(creatorId, page, limit);
   }
 
-  async getPublishedEvents(page = 1, limit = 10, filters?: any) {
+  async getPublishedEvents(
+    page = 1,
+    limit = 10,
+    filters?: { category?: string; minPrice?: number; maxPrice?: number; search?: string }
+  ) {
     return eventRepository.findPublished(page, limit, filters);
   }
 
@@ -99,7 +103,7 @@ export class EventService {
     if (data.endDate) updateData.endDate = new Date(data.endDate);
     if (data.totalTickets) updateData.totalTickets = data.totalTickets;
     if (data.price) updateData.price = data.price;
-    if (data.status) updateData.status = data.status as any;
+    if (data.status) updateData.status = data.status as "draft" | "published" | "cancelled";
 
     const updated = await eventRepository.update(eventId, updateData);
     if (!updated) throw new NotFoundError("Event");

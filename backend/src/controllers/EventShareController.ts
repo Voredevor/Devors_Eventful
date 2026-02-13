@@ -12,7 +12,11 @@ export class EventShareController {
   static shareEvent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { eventId } = req.params;
     const { platform } = req.body;
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     if (!platform) {
       res.status(400).json({
@@ -48,7 +52,11 @@ export class EventShareController {
    */
   static getEventShareStats = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { eventId } = req.params;
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     const stats = await eventShareService.getEventShareStats(eventId, userId);
 
@@ -77,7 +85,11 @@ export class EventShareController {
    * Get creator's sharing statistics
    */
   static getCreatorShareStats = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     const stats = await eventShareService.getCreatorShareStats(userId);
 

@@ -1,7 +1,7 @@
 import { ticketRepository } from "@repositories/TicketRepository";
 import { eventRepository } from "@repositories/EventRepository";
 import { qrCodeService } from "@services/QRCodeService";
-import { getRedisClient, cacheDelete } from "@config/redis";
+import { cacheDelete } from "@config/redis";
 import { Ticket } from "@models/Ticket";
 import { AuthorizationError, ValidationError, NotFoundError } from "@utils/errors";
 

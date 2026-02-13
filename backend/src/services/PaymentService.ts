@@ -2,7 +2,6 @@ import axios from "axios";
 import crypto from "crypto";
 import { paymentRepository } from "@repositories/PaymentRepository";
 import { ticketRepository } from "@repositories/TicketRepository";
-import { eventRepository } from "@repositories/EventRepository";
 import { Payment } from "@models/Payment";
 import { User } from "@models/User";
 import { ValidationError, NotFoundError, AuthorizationError } from "@utils/errors";
@@ -95,10 +94,10 @@ export class PaymentService {
         accessCode: paystackResponse.data.data.access_code,
         reference: paystackResponse.data.data.reference,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Delete payment record if Paystack initialization fails
       await paymentRepository.delete(payment.id);
-      throw new Error(`Paystack initialization failed: ${error.message}`);
+      throw new Error(`Paystack initialization failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 
@@ -147,15 +146,15 @@ export class PaymentService {
         });
         throw new ValidationError("Payment was not successful");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       await paymentRepository.update(payment.id, {
         status: "failed",
       });
-      throw new Error(`Payment verification failed: ${error.message}`);
+      throw new Error(`Payment verification failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 
-  async handleWebhook(body: any, signature: string): Promise<Payment> {
+  async handleWebhook(body: Record<string, unknown>, signature: string): Promise<Payment> {
     // Verify webhook signature
     const hash = crypto.createHmac("sha512", PAYSTACK_SECRET).update(JSON.stringify(body)).digest("hex");
 
@@ -164,7 +163,8 @@ export class PaymentService {
     }
 
     if (body.event === "charge.success") {
-      const reference = body.data.reference;
+      const webhookData = body as { event: string; data: { reference: string } };
+      const reference = webhookData.data.reference;
       return this.verifyPayment(reference);
     }
 
@@ -223,8 +223,8 @@ export class PaymentService {
       }
 
       return updatedPayment;
-    } catch (error: any) {
-      throw new Error(`Refund failed: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Refund failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 

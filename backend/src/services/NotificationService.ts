@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import twilio from "twilio";
 import config from "@config/environment";
 import { notificationRepository } from "@repositories/NotificationRepository";
+import { Notification } from "@models/Notification";
 
 // Initialize external services
 const resend = new Resend(config.email.resendApiKey);
@@ -96,7 +97,7 @@ export class NotificationService {
   private emailService = new EmailService();
   private smsService = new SMSService();
 
-  async createNotification(payload: NotificationPayload): Promise<any> {
+  async createNotification(payload: NotificationPayload): Promise<Notification> {
     const notification = await notificationRepository.create({
       userId: payload.userId,
       eventId: payload.eventId,
@@ -198,7 +199,7 @@ export class NotificationService {
     }
   }
 
-  async getNotifications(userId: string, page = 1, limit = 20): Promise<{ notifications: any[]; total: number; pages: number; unread: number }> {
+  async getNotifications(userId: string, page = 1, limit = 20): Promise<{ notifications: Notification[]; total: number; pages: number; unread: number }> {
     const { notifications, total } = await notificationRepository.findByUserId(userId, page, limit);
     const unread = await notificationRepository.countUnread(userId);
 
@@ -210,7 +211,7 @@ export class NotificationService {
     };
   }
 
-  async markAsRead(notificationId: string, userId: string): Promise<any> {
+  async markAsRead(notificationId: string, userId: string): Promise<Notification> {
     const notification = await notificationRepository.findById(notificationId);
     if (!notification || notification.userId !== userId) {
       throw new Error("Unauthorized");

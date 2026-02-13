@@ -4,7 +4,11 @@ import { asyncHandler } from "@middleware/errorHandler";
 
 export const notificationController = {
   getNotifications: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
 
@@ -26,7 +30,11 @@ export const notificationController = {
   }),
 
   getUnreadCount: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
     const unreadCount = await notificationService.getUnreadCount(userId);
 
     res.status(200).json({
@@ -39,7 +47,11 @@ export const notificationController = {
 
   markAsRead: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { notificationId } = req.params;
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     const notification = await notificationService.markAsRead(notificationId, userId);
 
@@ -51,7 +63,11 @@ export const notificationController = {
   }),
 
   markAllAsRead: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     await notificationService.markAllAsRead(userId);
 
@@ -63,7 +79,11 @@ export const notificationController = {
 
   deleteNotification: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { notificationId } = req.params;
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     await notificationService.deleteNotification(notificationId, userId);
 

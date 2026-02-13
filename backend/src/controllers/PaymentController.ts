@@ -1,21 +1,17 @@
 import { Request, Response } from "express";
 import { paymentService } from "@services/PaymentService";
 import { asyncHandler } from "@middleware/errorHandler";
-import { validateRequest } from "@utils/validators";
+import { validateRequest, createPaymentInitSchema } from "@utils/validators";
 
 export const paymentController = {
   initializePayment: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const { eventId, ticketId, amount } = req.body;
-    const userId = (req as any).user.id;
-
-    validateRequest(
-      {
-        eventId: "string",
-        ticketId: "string",
-        amount: "number",
-      },
-      req.body
-    );
+    const schema = createPaymentInitSchema();
+    const { eventId, ticketId, amount } = validateRequest<{ eventId: string; ticketId: string; amount: number }>(req.body, schema);
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     if (amount <= 0) {
       res.status(400).json({
@@ -90,7 +86,11 @@ export const paymentController = {
 
   getPayment: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { paymentId } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     const payment = await paymentService.getPaymentById(paymentId, userId);
 
@@ -101,7 +101,11 @@ export const paymentController = {
   }),
 
   getUserPayments: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const userId = (req as any).user.id;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
 
@@ -130,7 +134,11 @@ export const paymentController = {
 
   refundPayment: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { paymentId } = req.params;
-    const userId = (req as any).user.id;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: { message: "User not authenticated" } });
+      return;
+    }
 
     const payment = await paymentService.refundPayment(paymentId, userId);
 

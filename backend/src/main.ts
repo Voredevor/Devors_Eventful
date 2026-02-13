@@ -71,7 +71,7 @@ const startServer = async (): Promise<void> => {
     // Start listening
     const server = app.listen(config.app.port, () => {
       Logger.section("✅ Server Ready");
-      Logger.success(`Server running`, `http://localhost:${config.app.port}`);
+      Logger.success("Server running", `http://localhost:${config.app.port}`);
       Logger.info("API Docs", `http://localhost:${config.app.port}/api/docs`);
       Logger.info("Health Check", `http://localhost:${config.app.port}/health`);
       Logger.info("Status", `http://localhost:${config.app.port}/api/status`);
@@ -148,7 +148,7 @@ const startServer = async (): Promise<void> => {
     });
 
     // Handle unhandled promise rejections
-    process.on("unhandledRejection", (reason, promise) => {
+    process.on("unhandledRejection", (reason, _promise) => {
       Logger.error("Unhandled Rejection", String(reason));
       process.exit(1);
     });

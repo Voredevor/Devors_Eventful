@@ -17,6 +17,10 @@
     "migrate:revert": "typeorm migration:revert -d src/config/database.ts",
     "swagger": "swagger-jsdoc -d ./swagger-config.js -f swagger.json swagger/"
   },
+
+  "engines": {
+  "node": "20.x"
+},
   "keywords": [
     "events",
     "ticketing",
